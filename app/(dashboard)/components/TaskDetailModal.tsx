@@ -22,6 +22,7 @@ interface TaskDetails {
   priority: string | null;
   due_date: string | null;
   estimated_time_minutes: number | null;
+  total_tracked_minutes?: number | null;
   assignee_id: string | null;
   creator_id: string | null;
   assignee: {
