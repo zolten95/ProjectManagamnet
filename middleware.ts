@@ -2,18 +2,18 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file."
-  );
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file."
+    );
+  }
+
+  return { url: supabaseUrl, key: supabaseAnonKey };
 }
-
-// TypeScript now knows these are strings after the check above
-const url: string = supabaseUrl;
-const key: string = supabaseAnonKey;
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -22,6 +22,7 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  const { url, key } = getSupabaseConfig();
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
