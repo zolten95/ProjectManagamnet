@@ -375,7 +375,7 @@ function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => vo
   function handleDragStart(e: React.DragEvent) {
     wasDraggedRef.current = false;
     e.dataTransfer.setData("taskId", task.id);
-    e.currentTarget.style.opacity = "0.5";
+    (e.currentTarget as HTMLElement).style.opacity = "0.5";
   }
 
   function handleDrag(e: React.DragEvent) {
@@ -384,7 +384,7 @@ function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => vo
   }
 
   function handleDragEnd(e: React.DragEvent) {
-    e.currentTarget.style.opacity = "1";
+    (e.currentTarget as HTMLElement).style.opacity = "1";
     // Keep the flag true briefly to prevent click event
     // It will be reset in handleClick or after timeout
     setTimeout(() => {
