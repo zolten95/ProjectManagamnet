@@ -111,7 +111,7 @@ export default function Calendar({
         <button
           onClick={handlePreviousMonth}
           className="p-1 hover:bg-zinc-800 rounded transition-colors"
-          disabled={minDate && currentMonth <= new Date(minDate.getFullYear(), minDate.getMonth(), 1)}
+          disabled={minDate ? currentMonth <= new Date(minDate.getFullYear(), minDate.getMonth(), 1) : false}
         >
           <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
