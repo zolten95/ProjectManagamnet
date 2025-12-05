@@ -22,23 +22,34 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const { url, key } = getSupabaseConfig();
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+  try {
+    const { url, key } = getSupabaseConfig();
+    const supabase = createServerClient(url, key, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
+        },
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value);
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
+    });
 
-  // Refresh session if expired
-  await supabase.auth.getUser();
+    // Refresh session if expired - don't throw if it fails
+    try {
+      await supabase.auth.getUser();
+    } catch (error) {
+      // Silently fail - user might not be authenticated yet
+      console.error('Middleware auth error:', error);
+    }
+  } catch (error) {
+    // If config fails, log but don't break the request
+    console.error('Middleware config error:', error);
+    // Still return response to allow page to load
+  }
 
   return response;
 }
