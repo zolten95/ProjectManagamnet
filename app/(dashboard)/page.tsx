@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseClient";
-import TaskDetailModal from "./components/TaskDetailModal";
 import { updateTaskStatus } from "./actions/task-actions";
 
 interface TaskWithMetadata {
@@ -18,10 +19,10 @@ interface TaskWithMetadata {
 }
 
 export default function MyTasksPage() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<TaskWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -239,7 +240,7 @@ export default function MyTasksPage() {
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onClick={() => setSelectedTaskId(task.id)}
+                      onTaskClick={() => router.push(`/tasks/${task.id}`)}
                     />
                   ))
                 )}
@@ -277,12 +278,16 @@ export default function MyTasksPage() {
                 tasks.map((task) => (
                   <tr
                     key={task.id}
-                    onClick={() => setSelectedTaskId(task.id)}
-                    className="hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="hover:bg-zinc-800 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="text-white font-medium">{task.title}</div>
+                        <Link 
+                          href={`/tasks/${task.id}`}
+                          className="text-white font-medium hover:text-[#6295ff] transition-colors"
+                        >
+                          {task.title}
+                        </Link>
                         {task.comment_count && task.comment_count > 0 && (
                           <span className="bg-zinc-700 text-zinc-300 text-xs px-1.5 py-0.5 rounded">
                             {task.comment_count}
@@ -328,17 +333,11 @@ export default function MyTasksPage() {
         </div>
       )}
 
-      <TaskDetailModal
-        taskId={selectedTaskId || ""}
-        isOpen={selectedTaskId !== null}
-        onClose={() => setSelectedTaskId(null)}
-        onTaskUpdated={handleTaskUpdate}
-      />
     </div>
   );
 }
 
-function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => void }) {
+function TaskCard({ task, onTaskClick }: { task: TaskWithMetadata; onTaskClick: () => void }) {
   const wasDraggedRef = useRef(false);
 
   function formatTime(minutes: number): string {
@@ -359,7 +358,7 @@ function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => vo
       : null;
 
   function handleClick(e: React.MouseEvent) {
-    // Prevent opening modal if this was a drag operation
+    // Prevent navigation if this was a drag operation
     if (wasDraggedRef.current) {
       e.preventDefault();
       e.stopPropagation();
@@ -369,7 +368,7 @@ function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => vo
       }, 100);
       return;
     }
-    onClick();
+    onTaskClick();
   }
 
   function handleDragStart(e: React.DragEvent) {
@@ -402,7 +401,12 @@ function TaskCard({ task, onClick }: { task: TaskWithMetadata; onClick: () => vo
       className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors cursor-move active:cursor-grabbing"
     >
       <div className="flex items-start justify-between mb-2">
-        <h4 className="text-white font-medium flex-1">{task.title}</h4>
+        <button
+          onClick={handleClick}
+          className="text-white font-medium flex-1 text-left hover:text-[#6295ff] transition-colors"
+        >
+          {task.title}
+        </button>
         {task.comment_count && task.comment_count > 0 && (
           <span className="bg-zinc-800 text-zinc-300 text-xs px-1.5 py-0.5 rounded ml-2">
             {task.comment_count}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseClient";
+import AvatarUpload from "../(dashboard)/components/AvatarUpload";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function SettingsPage() {
     role: "",
     defaultView: "board" as "board" | "list",
   });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -31,7 +33,7 @@ export default function SettingsPage() {
 
         const { data: profile, error: profileError } = await supabaseBrowser
           .from("profiles")
-          .select("full_name, role, default_view")
+          .select("full_name, role, default_view, avatar_url")
           .eq("user_id", user.id)
           .single();
 
@@ -45,6 +47,7 @@ export default function SettingsPage() {
             role: profile.role || "",
             defaultView: (profile.default_view as "board" | "list") || "board",
           });
+          setAvatarUrl(profile.avatar_url || null);
         }
 
         setLoading(false);
@@ -127,6 +130,14 @@ export default function SettingsPage() {
             <p className="text-sm text-zinc-400">
               Update your profile information
             </p>
+          </div>
+
+          <div className="flex justify-center">
+            <AvatarUpload
+              currentAvatarUrl={avatarUrl}
+              userName={formData.fullName || "User"}
+              onAvatarUpdated={(url) => setAvatarUrl(url)}
+            />
           </div>
 
           {error && (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseClient";
+import AvatarUpload from "../(dashboard)/components/AvatarUpload";
 
 const STUDIO_DIRECTION_TEAM_ID = "92e8f38d-5161-4d70-bbdd-772d23cc7373";
 
@@ -16,6 +17,7 @@ export default function SetupPage() {
     role: "",
     defaultView: "board" as "board" | "list",
   });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkProfile() {
@@ -32,7 +34,7 @@ export default function SetupPage() {
         // Check if profile is already complete
         const { data: profile, error: profileError } = await supabaseBrowser
           .from("profiles")
-          .select("full_name, role, default_view")
+          .select("full_name, role, default_view, avatar_url")
           .eq("user_id", user.id)
           .single();
 
@@ -69,6 +71,7 @@ export default function SetupPage() {
             role: profile.role || "",
             defaultView: (profile.default_view as "board" | "list") || "board",
           });
+          setAvatarUrl(profile.avatar_url || null);
         }
 
         // Ensure user is in StudioDirection workspace
@@ -166,6 +169,14 @@ export default function SetupPage() {
           <p className="text-sm text-zinc-400">
             Let&apos;s set up your account
           </p>
+        </div>
+
+        <div className="flex justify-center">
+          <AvatarUpload
+            currentAvatarUrl={avatarUrl}
+            userName={formData.fullName || "User"}
+            onAvatarUpdated={(url) => setAvatarUrl(url)}
+          />
         </div>
 
         {error && (

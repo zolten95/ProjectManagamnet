@@ -1,6 +1,5 @@
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import LogoutButton from "./components/LogoutButton";
 
 export default function DashboardLayout({
   children,
@@ -14,7 +13,6 @@ export default function DashboardLayout({
         <Header />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
-      <LogoutButton />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import CreateTaskModal from "./CreateTaskModal";
+import Avatar from "./Avatar";
 
 export default function Header() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function Header() {
         setUser(user);
         const { data } = await supabaseBrowser
           .from("profiles")
-          .select("full_name")
+          .select("full_name, avatar_url")
           .eq("user_id", user.id)
           .single();
         setProfile(data);
@@ -37,12 +38,6 @@ export default function Header() {
   }
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
-  const initials = displayName
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 
   return (
     <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6">
@@ -63,9 +58,11 @@ export default function Header() {
             onClick={() => setShowMenu(!showMenu)}
             className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-zinc-800 transition-colors"
           >
-            <div className="w-8 h-8 bg-[#6295ff] rounded-full flex items-center justify-center text-white text-sm font-medium">
-              {initials}
-            </div>
+            <Avatar
+              name={displayName}
+              avatarUrl={profile?.avatar_url}
+              size="sm"
+            />
             <span className="text-sm text-zinc-300 hidden md:block">
               {displayName}
             </span>

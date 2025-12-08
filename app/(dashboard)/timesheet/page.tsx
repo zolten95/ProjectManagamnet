@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getTimesheetData, getUserAccountDate, type TimesheetData } from "../actions/timesheet-actions";
 import { addManualTimeEntry, stopTimer, deleteTimeEntry } from "../actions/time-actions";
 import CreateTaskModal from "../components/CreateTaskModal";
-import TaskDetailModal from "../components/TaskDetailModal";
 import Calendar from "../components/Calendar";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
@@ -66,13 +67,13 @@ function getStatusColor(status: string): string {
 }
 
 export default function TimesheetPage() {
+  const router = useRouter();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [timesheetData, setTimesheetData] = useState<TimesheetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [accountDate, setAccountDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<"timesheet" | "entries">("timesheet");
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<{ taskId: string; date: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
@@ -497,12 +498,12 @@ export default function TimesheetPage() {
                 <div className="px-4 py-3 flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor(task.task_status)}`}></div>
                   <div className="flex-1 min-w-0">
-                    <button
-                      onClick={() => setSelectedTaskId(task.task_id)}
-                      className="text-white font-medium truncate hover:text-[#6295ff] transition-colors text-left w-full"
+                    <Link
+                      href={`/tasks/${task.task_id}`}
+                      className="text-white font-medium truncate hover:text-[#6295ff] transition-colors text-left w-full block"
                     >
                       {task.task_title}
-                    </button>
+                    </Link>
                     <div className="text-xs text-zinc-500 truncate">
                       StudioDirection workspace
                     </div>
@@ -626,17 +627,6 @@ export default function TimesheetPage() {
         />
       )}
 
-      {/* Task Detail Modal */}
-      {selectedTaskId && (
-        <TaskDetailModal
-          taskId={selectedTaskId}
-          isOpen={selectedTaskId !== null}
-          onClose={() => setSelectedTaskId(null)}
-          onTaskUpdated={() => {
-            loadTimesheetData();
-          }}
-        />
-      )}
 
       {/* Context Menu */}
       {contextMenu && (

@@ -3,7 +3,11 @@
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
 
-export async function addComment(taskId: string, content: string) {
+export async function addComment(
+  taskId: string,
+  content: string,
+  attachments?: Array<{ url: string; name: string; type: string; size: number }>
+) {
   const supabase = await createSupabaseServerClient();
   
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -11,7 +15,7 @@ export async function addComment(taskId: string, content: string) {
     return { error: 'Not authenticated' };
   }
 
-  if (!content.trim()) {
+  if (!content.trim() && (!attachments || attachments.length === 0)) {
     return { error: 'Comment cannot be empty' };
   }
 
@@ -20,12 +24,10 @@ export async function addComment(taskId: string, content: string) {
     .insert({
       task_id: taskId,
       user_id: user.id,
-      content: content.trim(),
+      content: content.trim() || null,
+      attachments: attachments && attachments.length > 0 ? attachments : null,
     })
-    .select(`
-      *,
-      user:profiles!task_comments_user_id_fkey(full_name, user_id)
-    `)
+    .select('*')
     .single();
 
   if (error) {
@@ -33,9 +35,25 @@ export async function addComment(taskId: string, content: string) {
     return { error: error.message };
   }
 
+  // Get user profile separately
+  let userProfile = null;
+  if (data.user_id) {
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, user_id, avatar_url')
+      .eq('user_id', data.user_id)
+      .single();
+    userProfile = profileData;
+  }
+
+  const commentWithUser = {
+    ...data,
+    user: userProfile,
+  };
+
   revalidatePath('/');
   revalidatePath('/all-tasks');
-  return { data };
+  return { data: commentWithUser };
 }
 
 export async function getComments(taskId: string) {
@@ -46,12 +64,9 @@ export async function getComments(taskId: string) {
     return { error: 'Not authenticated' };
   }
 
-  const { data, error } = await supabase
+  const { data: commentsData, error } = await supabase
     .from('task_comments')
-    .select(`
-      *,
-      user:profiles!task_comments_user_id_fkey(full_name, user_id)
-    `)
+    .select('*')
     .eq('task_id', taskId)
     .order('created_at', { ascending: true });
 
@@ -60,5 +75,20 @@ export async function getComments(taskId: string) {
     return { error: error.message };
   }
 
-  return { data: data || [] };
+  // Get user profiles for comments separately
+  const comments = await Promise.all(
+    (commentsData || []).map(async (comment) => {
+      if (comment.user_id) {
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('full_name, user_id, avatar_url')
+          .eq('user_id', comment.user_id)
+          .single();
+        return { ...comment, user: userData };
+      }
+      return { ...comment, user: null };
+    })
+  );
+
+  return { data: comments || [] };
 }
